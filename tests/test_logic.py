@@ -1,8 +1,9 @@
+import unittest
 from unittest import TestCase
 from contextlib import closing
 import asyncio
 
-from match_logic import MatchLogic
+import src.match_logic as match_logic
 
 
 async def client(logic, delay, **info):
@@ -14,7 +15,7 @@ async def client(logic, delay, **info):
 class TestMatchLogic(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.logic = MatchLogic()
+        cls.logic = match_logic.MatchLogic()
 
     def test_if_connected_clients_number_is_equal_limit_clients_number(self):
         clients_count = 3
@@ -29,4 +30,4 @@ class TestMatchLogic(TestCase):
                                     t.result()['player_info']['nickname'] in ['A', 'B', 'C']
                                     for t in tasks
                             ]))
-            print([t.result() for t in tasks])
+            # print([t.result() for t in tasks])

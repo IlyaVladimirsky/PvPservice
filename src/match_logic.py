@@ -3,13 +3,13 @@ import logging
 # from threading import Event, Lock
 from asyncio import Event, Lock
 
-import logger
-from singleton import Singleton
+import src.logger as logger
+from .singleton import Singleton
 
 
 logger = logger.get_logger(
     name=__name__,
-    path='../logs/debug.log',
+    path='logs/debug.log',
     level=logging.DEBUG,
     formatter='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
