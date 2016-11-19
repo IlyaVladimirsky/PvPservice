@@ -3,6 +3,7 @@ import logging
 from asyncio import Event, Lock
 
 import src.logger as logger
+from src.match_database import MatchDB
 from .singleton import Singleton
 
 
@@ -13,7 +14,8 @@ class MatchLogic:
     def __init__(self, clients_number=2, match_wait_time=1, debug=True):
         """Init docs here"""
 
-        # TODO: db class
+        self._match_db = MatchDB()
+
         self._clients_number = clients_number
         self._match_wait_time = match_wait_time
 
@@ -44,9 +46,11 @@ class MatchLogic:
             if self._waiting_count == self.clients_number:
                 self._waiting_count = 0
 
-                # TODO: create and store new match in db
-                self._match_id = 1
-                player_id = 1  # TODO: generate client id for the _match_id
+                self._match_id = self._match_db.create_match()
+
+                match_player_id = 1  # TODO: generate client id for the _match_id
+                player_id = self._match_db.register_player(**client_info)
+                self._match_db.assign_player_to_match(self._match_id, player_id, match_player_id)
 
                 self.logger.debug('[create_match_request]: %s unlocked event locker', client_info['nickname'])
                 self._event_lock.set()
@@ -67,7 +71,10 @@ class MatchLogic:
             try:
                 self.logger.debug('[create_match_request]: %s is waiting', client_info['nickname'])
                 await asyncio.wait_for(self._event_lock.wait(), self.match_wait_time)
-                player_id = 1  # TODO: generate client id for the _match_id
+
+                match_player_id = 1  # TODO: generate client id for the _match_id
+                player_id = self._match_db.register_player(**client_info)
+                self._match_db.assign_player_to_match(self._match_id, player_id, match_player_id)
 
                 self.logger.debug('[create_match_request]: %s  - return success response', client_info['nickname'])
                 return self._get_match_response(self._match_id, **{
