@@ -21,8 +21,10 @@ class MatchLogic:
 
         self._event_lock = Event()
         self._count_lock = Lock()
+        self._unique_id_lock = Lock()
         self._waiting_count = 0
 
+        self._unique_player_ids = []
         self._match_id = None
 
         self.logger = logger.get_logger(
@@ -47,10 +49,11 @@ class MatchLogic:
                 self._waiting_count = 0
 
                 self._match_id = self._match_db.create_match()
+                self._unique_player_ids = range(self.clients_number)
 
-                match_player_id = 1  # TODO: generate client id for the _match_id
+                unique_player_id = self._get_unique_player_id()
                 player_id = self._match_db.register_player(**client_info)
-                self._match_db.assign_player_to_match(self._match_id, player_id, match_player_id)
+                self._match_db.assign_player_to_match(self._match_id, player_id, unique_player_id)
 
                 self.logger.debug('[create_match_request]: %s unlocked event locker', client_info['nickname'])
                 self._event_lock.set()
@@ -72,9 +75,9 @@ class MatchLogic:
                 self.logger.debug('[create_match_request]: %s is waiting', client_info['nickname'])
                 await asyncio.wait_for(self._event_lock.wait(), self.match_wait_time)
 
-                match_player_id = 1  # TODO: generate client id for the _match_id
+                unique_player_id = self._get_unique_player_id()
                 player_id = self._match_db.register_player(**client_info)
-                self._match_db.assign_player_to_match(self._match_id, player_id, match_player_id)
+                self._match_db.assign_player_to_match(self._match_id, player_id, unique_player_id)
 
                 self.logger.debug('[create_match_request]: %s  - return success response', client_info['nickname'])
                 return self._get_match_response(self._match_id, **{
@@ -100,6 +103,12 @@ class MatchLogic:
 
         with await self._count_lock:
             self._waiting_count -= 1
+
+    async def _get_unique_player_id(self):
+        """Method docs here"""
+
+        with await self._unique_id_lock:
+            return self._unique_player_ids.pop(0) if len(self._unique_player_ids) > 0 else None
 
     def _get_match_response(self, match_id, **player_info):
         return {
