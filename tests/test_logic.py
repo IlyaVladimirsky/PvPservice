@@ -1,8 +1,17 @@
+import logging
 from unittest import TestCase
 import asyncio
 
 import src.match_logic as match_logic
+import src.logger as logger
 
+
+log = logger.get_logger(
+    name=__name__,
+    path='logs/test.log',
+    level=logging.DEBUG,
+    formatter='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 async def client(logic, delay=0, **info):
     await asyncio.sleep(delay)
@@ -17,7 +26,7 @@ def is_timeout_response(response):
 class TestMatchLogic(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.logic = match_logic.MatchLogic()
+        cls.logic = match_logic.MatchLogic(2, 1, log)
         cls.loop = asyncio.get_event_loop()
 
     @classmethod
@@ -25,7 +34,7 @@ class TestMatchLogic(TestCase):
         cls.loop.close()
 
     def test_if_connected_clients_number_is_equal_limit_clients_number(self):
-        clients_count = 20
+        clients_count = 10
         TestMatchLogic.logic.clients_number = clients_count
 
         loop = TestMatchLogic.loop
@@ -33,6 +42,9 @@ class TestMatchLogic(TestCase):
             TestMatchLogic.logic, 0, **{'nickname': str(i), 'ip': i})) for i in range(clients_count)]
         loop.run_until_complete(asyncio.gather(*tasks))
 
+        log.debug('******************test_if_connected_clients_number_is_equal_limit_clients_number******************')
+        for t in tasks:
+            log.debug('%s', t.result())
         self.assertTrue(all([not is_timeout_response(t.result()) for t in tasks]))
 
     def test_if_connected_clients_number_is_less_than_limit_clients_number(self):
@@ -46,10 +58,13 @@ class TestMatchLogic(TestCase):
             TestMatchLogic.logic, 0, **{'nickname': str(i), 'ip': i})) for i in range(clients_count - 1)]
         loop.run_until_complete(asyncio.gather(*tasks))
 
+        log.debug('****************test_if_connected_clients_number_is_less_than_limit_clients_number****************')
+        for t in tasks:
+            log.debug('%s', t.result())
         self.assertTrue(all([is_timeout_response(t.result()) for t in tasks]))
 
     def test_if_many_clients_is_connecting(self):
-        clients_count = 5
+        clients_count = 2
         time_out = 1
         connecting_count = clients_count * 10 - 1
         excess_count = connecting_count % clients_count
@@ -61,6 +76,9 @@ class TestMatchLogic(TestCase):
             TestMatchLogic.logic, 0, **{'nickname': str(i), 'ip': i})) for i in range(connecting_count)]
         loop.run_until_complete(asyncio.gather(*tasks))
 
+        log.debug('*****************************test_if_many_clients_is_connecting*****************************')
+        for t in tasks:
+            log.debug('%s', t.result())
         self.assertTrue(sum([is_timeout_response(t.result()) for t in tasks]) == excess_count)
 
     def test_check_timeout_fails_match(self):
@@ -77,4 +95,7 @@ class TestMatchLogic(TestCase):
             TestMatchLogic.logic, i * 0.1, **{'nickname': str(i), 'ip': i})) for i in range(clients_count)]
         loop.run_until_complete(asyncio.gather(*tasks))
 
+        log.debug('*****************************test_check_timeout_fails_match*****************************')
+        for t in tasks:
+            log.debug('%s', t.result())
         self.assertTrue(all([is_timeout_response(t.result()) for t in tasks]))
