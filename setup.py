@@ -15,6 +15,5 @@ setup(
     description='PvP service developed to gather players for a match.',
     author='Ilia Vladimirsky',
     author_email='ivv.hardwork@gmail.com',
-    packages=['src', 'tests', 'src.utils'],
-    scripts=['run_all_tests.py']
+    packages=['src', 'tests', 'src.utils']
 )
