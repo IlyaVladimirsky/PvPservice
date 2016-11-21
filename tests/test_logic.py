@@ -1,10 +1,9 @@
+import asyncio
 import logging
 from unittest import TestCase
-import asyncio
 
 import src.match_logic as match_logic
-import src.logger as logger
-
+import src.utils.logger as logger
 
 log = logger.get_logger(
     name=__name__,

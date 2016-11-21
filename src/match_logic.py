@@ -2,7 +2,7 @@ import asyncio
 from asyncio import Event, Lock
 
 from src.match_database import MatchDB
-from .singleton import Singleton
+from src.utils.singleton import Singleton
 
 
 @Singleton
